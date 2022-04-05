@@ -28,17 +28,26 @@
 // Use project enums instead of #define for ON and OFF.
 
 #include <xc.h>
+#include<stdio.h>
 #include <stdint.h>
 
 //DEFINICION DE FRECUENCIA PARA DELAY
-#define _XTAL_FREQ 4000000
+#define _XTAL_FREQ 2000000
 
 //DEFINICION DE BOTONES
-#define incB PORTBbits.RB0
+#define incB PORTBbits.RB0      
 #define decB PORTBbits.RB1
+
+//DEFINICIONES GENERALES
+#define tmr0_val 61
+
+//VARIABLES GLOBALES
+uint8_t contador1;
 
 //PROTO FUNCIONES
 void setup(void);
+
+void tmr0_setup(void);
 
 //CONFIGURACION PRINCIPAL
 void setup(void){    
@@ -61,13 +70,28 @@ void setup(void){
     //CONFIG DE INTERRUPCIONES
     INTCONbits.GIE = 1;         // HABILITAR INTERRUPCIONES GLOBALES
     INTCONbits.RBIE = 1;        // HABILITAR INTERRUPCIONES EN PORTB
+    INTCONbits.T0IE = 1;
     IOCBbits.IOCB0 = 1;         // HABILITAR INTERRUPCION EN CAMBIO PARA RB0
     IOCBbits.IOCB1 = 1;         // HABILITAR INTERRUPCION EN CAMBIO PARA RB1
     INTCONbits.RBIF = 0;        // LIMPIAR BANDERA DE INTERRUPCION EN PORTB
+    INTCONbits.T0IF = 0;        // LIMPIAR BANDERA DE INTERRUPCION EN TMR0
     
     //OSCCONFIC
-    OSCCONbits.IRCF = 0b0110;   // FRECUENCIA DE OSCILADOR INTERNO (4MHz)
+    OSCCONbits.IRCF = 0b0101;   // FRECUENCIA DE OSCILADOR INTERNO (2MHz)
     OSCCONbits.SCS  = 1;        // RELOJ INTERNO
+    return;
+}
+
+//CONFIGURACION TMR0
+void tmr0_setup(void){
+    OPTION_REGbits.T0CS = 0;
+    OPTION_REGbits.PSA = 0;
+    OPTION_REGbits.PS0 = 1;
+    OPTION_REGbits.PS1 = 1;
+    OPTION_REGbits.PS2 = 1;
+    
+    INTCONbits.T0IF = 0;
+    TMR0 = tmr0_val;
     return;
 }
 
@@ -85,6 +109,12 @@ void __interrupt() isr(void){
         }
         INTCONbits.RBIF = 0;    // LIMPIAR BANDERA DE INTERRUPCION EN PORTB
     }
+    
+    if(T0IF){
+        contador1 ++;
+        INTCONbits.T0IF = 0;
+        TMR0 = tmr0_val;
+    }
     return;
 }
 
@@ -92,9 +122,11 @@ void __interrupt() isr(void){
 void main(void) {
     //EJECUCION CONFIG
     setup();
+    tmr0_setup();
     
     //LOOP MAIN
     while(1){
+        PORTC = contador1;
     }
     return;
 }
