@@ -70,7 +70,7 @@ void setup(void){
     //CONFIG DE INTERRUPCIONES
     INTCONbits.GIE = 1;         // HABILITAR INTERRUPCIONES GLOBALES
     INTCONbits.RBIE = 1;        // HABILITAR INTERRUPCIONES EN PORTB
-    INTCONbits.T0IE = 1;
+    INTCONbits.T0IE = 1;        // HABILITAR INTERRUPCIONES DE TMR0
     IOCBbits.IOCB0 = 1;         // HABILITAR INTERRUPCION EN CAMBIO PARA RB0
     IOCBbits.IOCB1 = 1;         // HABILITAR INTERRUPCION EN CAMBIO PARA RB1
     INTCONbits.RBIF = 0;        // LIMPIAR BANDERA DE INTERRUPCION EN PORTB
@@ -84,14 +84,14 @@ void setup(void){
 
 //CONFIGURACION TMR0
 void tmr0_setup(void){
-    OPTION_REGbits.T0CS = 0;
-    OPTION_REGbits.PSA = 0;
-    OPTION_REGbits.PS0 = 1;
-    OPTION_REGbits.PS1 = 1;
-    OPTION_REGbits.PS2 = 1;
+    OPTION_REGbits.T0CS = 0;    // UTILIZAR CICLO INTERNO
+    OPTION_REGbits.PSA = 0;     // CAMBIAR PRESCALER A TMR0
+    OPTION_REGbits.PS0 = 1;     // COLOCAR PRESCALER EN 1:256
+    OPTION_REGbits.PS1 = 1;     // 
+    OPTION_REGbits.PS2 = 1;     // 
     
-    INTCONbits.T0IF = 0;
-    TMR0 = tmr0_val;
+    INTCONbits.T0IF = 0;        // LIMPIAR BANDERA DE INTERRUPCION EN TMR0
+    TMR0 = tmr0_val;            // VALOR DE TMR0
     return;
 }
 
@@ -110,10 +110,10 @@ void __interrupt() isr(void){
         INTCONbits.RBIF = 0;    // LIMPIAR BANDERA DE INTERRUPCION EN PORTB
     }
     
-    if(T0IF){
-        contador1 ++;
-        INTCONbits.T0IF = 0;
-        TMR0 = tmr0_val;
+    if(T0IF){                   // INTERRUPCION DE TMR0 ACTIVADA
+        contador1 ++;           // INCREMENTAR CUENTA EN CONTADOR
+        INTCONbits.T0IF = 0;    // LIMPIAR BANDERA DE INTERRUPCION EN TMR0
+        TMR0 = tmr0_val;        // REINICIAR TMR0
     }
     return;
 }
@@ -126,7 +126,7 @@ void main(void) {
     
     //LOOP MAIN
     while(1){
-        PORTC = contador1;
+        PORTC = contador1;      // ACTUALIZAR CONSTANTEMENTE PORTC
     }
     return;
 }
