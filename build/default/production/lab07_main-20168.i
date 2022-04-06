@@ -2749,6 +2749,7 @@ extern int printf(const char *, ...);
 # 32 "lab07_main-20168.c" 2
 # 45 "lab07_main-20168.c"
 uint8_t contador1;
+uint8_t contador2;
 
 
 void setup(void);
@@ -2783,7 +2784,7 @@ void setup(void){
     INTCONbits.T0IF = 0;
 
 
-    OSCCONbits.IRCF = 0b0101;
+    OSCCONbits.IRCF = 0b0110;
     OSCCONbits.SCS = 1;
     return;
 }
@@ -2797,7 +2798,7 @@ void tmr0_setup(void){
     OPTION_REGbits.PS2 = 1;
 
     INTCONbits.T0IF = 0;
-    TMR0 = 61;
+    TMR0 = 217;
     return;
 }
 
@@ -2806,20 +2807,22 @@ void __attribute__((picinterrupt(("")))) isr(void){
 
     if(INTCONbits.RBIF){
         if (!PORTBbits.RB0){
-            while(!PORTBbits.RB0);
             PORTA++;
         }
         else if(!PORTBbits.RB1){
-            while(!PORTBbits.RB1);
             PORTA--;
         }
         INTCONbits.RBIF = 0;
     }
 
-    if(T0IF){
+    else if(T0IF){
         contador1 ++;
+        if(contador1 == 10){
+            contador2 ++;
+            contador1 = 0;
+        }
         INTCONbits.T0IF = 0;
-        TMR0 = 61;
+        TMR0 = 217;
     }
     return;
 }
@@ -2832,7 +2835,7 @@ void main(void) {
 
 
     while(1){
-        PORTC = contador1;
+        PORTC = contador2;
     }
     return;
 }

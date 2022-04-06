@@ -32,17 +32,18 @@
 #include <stdint.h>
 
 //DEFINICION DE FRECUENCIA PARA DELAY
-#define _XTAL_FREQ 2000000
+#define _XTAL_FREQ 4000000
 
 //DEFINICION DE BOTONES
 #define incB PORTBbits.RB0      
 #define decB PORTBbits.RB1
 
 //DEFINICIONES GENERALES
-#define tmr0_val 61
+#define tmr0_val 217
 
 //VARIABLES GLOBALES
 uint8_t contador1;
+uint8_t contador2;
 
 //PROTO FUNCIONES
 void setup(void);
@@ -77,7 +78,7 @@ void setup(void){
     INTCONbits.T0IF = 0;        // LIMPIAR BANDERA DE INTERRUPCION EN TMR0
     
     //OSCCONFIC
-    OSCCONbits.IRCF = 0b0101;   // FRECUENCIA DE OSCILADOR INTERNO (2MHz)
+    OSCCONbits.IRCF = 0b0110;   // FRECUENCIA DE OSCILADOR INTERNO (4MHz)
     OSCCONbits.SCS  = 1;        // RELOJ INTERNO
     return;
 }
@@ -100,18 +101,20 @@ void __interrupt() isr(void){
     
     if(INTCONbits.RBIF){
         if (!incB){             // REVISAR SI RB0 FUE PRESIONADO
-            while(!incB);       // ANTIRREBOTES EN RB0
             PORTA++;            // INCREMENTAR PORTA
         }
         else if(!decB){         // REVISAR SI RB1 FUE PRESIONADO
-            while(!decB);       // ANTIRREBOTES EN RB1
             PORTA--;            // DECREMENTAR PORTA
         }
         INTCONbits.RBIF = 0;    // LIMPIAR BANDERA DE INTERRUPCION EN PORTB
     }
     
-    if(T0IF){                   // INTERRUPCION DE TMR0 ACTIVADA
+    else if(T0IF){              // INTERRUPCION DE TMR0 ACTIVADA
         contador1 ++;           // INCREMENTAR CUENTA EN CONTADOR
+        if(contador1 == 10){    
+            contador2 ++;
+            contador1 = 0;
+        }
         INTCONbits.T0IF = 0;    // LIMPIAR BANDERA DE INTERRUPCION EN TMR0
         TMR0 = tmr0_val;        // REINICIAR TMR0
     }
@@ -126,7 +129,7 @@ void main(void) {
     
     //LOOP MAIN
     while(1){
-        PORTC = contador1;      // ACTUALIZAR CONSTANTEMENTE PORTC
+        PORTC = contador2;      // ACTUALIZAR CONSTANTEMENTE PORTC
     }
     return;
 }
