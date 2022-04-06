@@ -110,10 +110,10 @@ void __interrupt() isr(void){
     }
     
     else if(T0IF){              // INTERRUPCION DE TMR0 ACTIVADA
-        contador1 ++;           // INCREMENTAR CUENTA EN CONTADOR
-        if(contador1 == 10){    
-            contador2 ++;
-            contador1 = 0;
+        contador1 ++;           // INCREMENTAR CUENTA EN CONTADOR1
+        if(contador1 == 10){    // REVISAR SI SE HA LLEGADO A LOS 10 SETS DE 10mS
+            contador2 ++;       // INCREMENTAR CUENTA EN CONTADOR2
+            contador1 = 0;      // LIMPIAR CUENTA EN CONTADOR1
         }
         INTCONbits.T0IF = 0;    // LIMPIAR BANDERA DE INTERRUPCION EN TMR0
         TMR0 = tmr0_val;        // REINICIAR TMR0
