@@ -2747,14 +2747,28 @@ extern int printf(const char *, ...);
 
 # 1 "C:\\Program Files\\Microchip\\xc8\\v2.35\\pic\\include\\c90\\stdint.h" 1 3
 # 32 "lab07_main-20168.c" 2
-# 45 "lab07_main-20168.c"
-uint8_t contador1;
-uint8_t contador2;
+# 48 "lab07_main-20168.c"
+uint8_t contador1 = 0;
+uint8_t mod = 0;
+uint8_t A = 1;
+uint8_t B = 1;
+uint8_t C = 1;
+uint8_t D = 1;
+int huns = 0;
+int tens = 0;
+int ones = 0;
+int disp_flag = 0;
+
+
+char index[10] = {0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110,
+0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111};
 
 
 void setup(void);
 
 void tmr0_setup(void);
+
+int digits(void);
 
 
 void setup(void){
@@ -2766,6 +2780,8 @@ void setup(void){
     PORTA = 0;
     TRISC = 0;
     PORTC = 0;
+    TRISD = 0;
+    PORTD = 0;
 
 
     TRISBbits.TRISB0 = 1;
@@ -2798,31 +2814,65 @@ void tmr0_setup(void){
     OPTION_REGbits.PS2 = 1;
 
     INTCONbits.T0IF = 0;
-    TMR0 = 217;
+    TMR0 = 248;
     return;
+}
+
+int digits(void){
+    mod = contador1%100;
+    huns = contador1/100;
+    tens = mod/10;
+    ones = mod%10;
 }
 
 
 void __attribute__((picinterrupt(("")))) isr(void){
 
     if(INTCONbits.RBIF){
+        A = 1;
+        C = 1;
         if (!PORTBbits.RB0){
-            PORTA++;
+            A = 0;
+            B = A;
+        }
+        if (B != A){
+            B = A;
+            contador1++;
         }
         else if(!PORTBbits.RB1){
-            PORTA--;
+            C = 0;
+            D = C;
+        }
+        if (D != C){
+            D = C;
+            contador1--;
         }
         INTCONbits.RBIF = 0;
     }
 
     else if(T0IF){
-        contador1 ++;
-        if(contador1 == 10){
-            contador2 ++;
-            contador1 = 0;
-        }
         INTCONbits.T0IF = 0;
-        TMR0 = 217;
+        TMR0 = 248;
+        PORTD = 0;
+        if (disp_flag == 0){
+            PORTC = (index[ones]);
+            PORTDbits.RD0 = 0;
+            PORTDbits.RD2 = 1;
+            disp_flag = 1;
+        }
+        else if (disp_flag == 1){
+            PORTC = (index[tens]);
+            PORTDbits.RD2 = 0;
+            PORTDbits.RD1 = 1;
+            disp_flag = 2;
+        }
+        else if (disp_flag == 2){
+            PORTC = (index[huns]);
+            PORTDbits.RD1 = 0;
+            PORTDbits.RD0 = 1;
+            disp_flag = 0;
+        }
+
     }
     return;
 }
@@ -2835,7 +2885,8 @@ void main(void) {
 
 
     while(1){
-        PORTC = contador2;
+        PORTA = contador1;
+        digits();
     }
     return;
 }

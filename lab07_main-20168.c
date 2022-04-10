@@ -34,21 +34,38 @@
 //DEFINICION DE FRECUENCIA PARA DELAY
 #define _XTAL_FREQ 4000000
 
-//DEFINICION DE BOTONES
+//DEFINICION DE ALIAS PARA PINES
 #define incB PORTBbits.RB0      
 #define decB PORTBbits.RB1
+#define disp1 PORTDbits.RD2
+#define disp2 PORTDbits.RD1
+#define disp3 PORTDbits.RD0  
 
 //DEFINICIONES GENERALES
-#define tmr0_val 217
+#define tmr0_val 248            // PARA INTERRUPCIONES CADA 2mS
 
 //VARIABLES GLOBALES
-uint8_t contador1;
-uint8_t contador2;
+uint8_t contador1 = 0;
+uint8_t mod = 0;
+uint8_t A = 1;
+uint8_t B = 1;
+uint8_t C = 1;
+uint8_t D = 1;
+int huns = 0;
+int tens = 0;
+int ones = 0;
+int disp_flag = 0;
+
+//7SEG DISPLAY INDEX
+char index[10] = {0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 
+0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111};
 
 //PROTO FUNCIONES
 void setup(void);
 
 void tmr0_setup(void);
+
+int digits(void);
 
 //CONFIGURACION PRINCIPAL
 void setup(void){    
@@ -60,6 +77,8 @@ void setup(void){
     PORTA = 0;                  // LIMPIEZA DE PORTA
     TRISC = 0;                  // PORTC COMO SALIDA
     PORTC = 0;                  // LIMPIEZA DE PORTC
+    TRISD = 0;                  // PORTD RD0-RD2 COMO SALIDA
+    PORTD = 0;                  // LIMPIEZA DE PORTD
     
     //CONFIG PUSHBUTTONS EN PORTB
     TRISBbits.TRISB0 = 1;       // RB0 COMO INPUT
@@ -96,27 +115,61 @@ void tmr0_setup(void){
     return;
 }
 
+int digits(void){
+    mod = contador1%100;
+    huns = contador1/100;
+    tens = mod/10;
+    ones = mod%10;
+}
+
 //INTERRUPCIONES
 void __interrupt() isr(void){
     
     if(INTCONbits.RBIF){
+        A = 1;
+        C = 1;
         if (!incB){             // REVISAR SI RB0 FUE PRESIONADO
-            PORTA++;            // INCREMENTAR PORTA
+            A = 0;
+            B = A;        
+        }
+        if (B != A){            // REVISAR SI RB0 FUE LIBERADO
+            B = A;
+            contador1++;            // INCREMENTAR PORTA
         }
         else if(!decB){         // REVISAR SI RB1 FUE PRESIONADO
-            PORTA--;            // DECREMENTAR PORTA
+            C = 0;
+            D = C;         
+        }
+        if (D != C){            // REVISAR SI RB1 FUE LIBERADO
+            D = C;
+            contador1--;        // DECREMENTAR PORTA
         }
         INTCONbits.RBIF = 0;    // LIMPIAR BANDERA DE INTERRUPCION EN PORTB
     }
     
-    else if(T0IF){              // INTERRUPCION DE TMR0 ACTIVADA
-        contador1 ++;           // INCREMENTAR CUENTA EN CONTADOR1
-        if(contador1 == 10){    // REVISAR SI SE HA LLEGADO A LOS 10 SETS DE 10mS
-            contador2 ++;       // INCREMENTAR CUENTA EN CONTADOR2
-            contador1 = 0;      // LIMPIAR CUENTA EN CONTADOR1
-        }
+    else if(T0IF){                   // INTERRUPCION DE TMR0 ACTIVADA
         INTCONbits.T0IF = 0;    // LIMPIAR BANDERA DE INTERRUPCION EN TMR0
         TMR0 = tmr0_val;        // REINICIAR TMR0
+        PORTD = 0;              // PREPARAR PORTD PARA RECIVIR VALORES A DISP
+        if (disp_flag == 0){
+            PORTC = (index[ones]);
+            disp3 = 0;
+            disp1 = 1;            
+            disp_flag = 1;
+        }
+        else if (disp_flag == 1){
+            PORTC = (index[tens]);
+            disp1 = 0;
+            disp2 = 1;
+            disp_flag = 2;
+        }
+        else if (disp_flag == 2){
+            PORTC = (index[huns]);
+            disp2 = 0;
+            disp3 = 1;            
+            disp_flag = 0;
+        }
+        
     }
     return;
 }
@@ -129,7 +182,8 @@ void main(void) {
     
     //LOOP MAIN
     while(1){
-        PORTC = contador2;      // ACTUALIZAR CONSTANTEMENTE PORTC
+        PORTA = contador1;      // ACTUALIZAR CONSTANTEMENTE PORTC
+        digits();
     }
     return;
 }
