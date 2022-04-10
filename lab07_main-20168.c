@@ -45,16 +45,16 @@
 #define tmr0_val 248            // PARA INTERRUPCIONES CADA 2mS
 
 //VARIABLES GLOBALES
-uint8_t contador1 = 0;
-uint8_t mod = 0;
-uint8_t A = 1;
+uint8_t contador1 = 0;          // VARIABLE DE CONTADOR CON PUSHBUTTONS
+uint8_t mod = 0;                // VARIABLE DE MODULO
+uint8_t A = 1;                  // VARIABLES PARA ANTIRREBOTE 
 uint8_t B = 1;
 uint8_t C = 1;
 uint8_t D = 1;
-int huns = 0;
-int tens = 0;
-int ones = 0;
-int disp_flag = 0;
+int huns = 0;                   // VARIABLE PARA CENTENAS (HUNDREDS)
+int tens = 0;                   // VARIABLE PARA DECENAS (TENTHS)
+int ones = 0;                   // VARIABLE PARA UNIDADES (ONES)
+int disp_flag = 0;              // BANDERA PARA DISPLAYS
 
 //7SEG DISPLAY INDEX
 char index[10] = {0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 
@@ -77,7 +77,7 @@ void setup(void){
     PORTA = 0;                  // LIMPIEZA DE PORTA
     TRISC = 0;                  // PORTC COMO SALIDA
     PORTC = 0;                  // LIMPIEZA DE PORTC
-    TRISD = 0;                  // PORTD RD0-RD2 COMO SALIDA
+    TRISD = 0b11111000          // PORTD RD0-RD2 COMO SALIDA
     PORTD = 0;                  // LIMPIEZA DE PORTD
     
     //CONFIG PUSHBUTTONS EN PORTB
@@ -114,12 +114,12 @@ void tmr0_setup(void){
     TMR0 = tmr0_val;            // VALOR DE TMR0
     return;
 }
-
+//
 int digits(void){
-    mod = contador1%100;
-    huns = contador1/100;
-    tens = mod/10;
-    ones = mod%10;
+    mod = contador1%100;        // CALCULO DEL MODULO DEL CONTADOR PARA AISLAR DECENAS Y UNIDADES
+    huns = contador1/100;       // DIVISION DE CONTADOR PARA DETERMINAR CENTENAS
+    tens = mod/10;              // DIVISION DEL MODULO DEL CONTADOR PARA DETERMINAR DECENAS
+    ones = mod%10;              // MODULO DEL MODULO DEL CONTADOR PARA DETERMINAR UNIDADES
 }
 
 //INTERRUPCIONES
@@ -134,7 +134,7 @@ void __interrupt() isr(void){
         }
         if (B != A){            // REVISAR SI RB0 FUE LIBERADO
             B = A;
-            contador1++;            // INCREMENTAR PORTA
+            contador1++;        // INCREMENTAR PORTA
         }
         else if(!decB){         // REVISAR SI RB1 FUE PRESIONADO
             C = 0;
@@ -147,29 +147,28 @@ void __interrupt() isr(void){
         INTCONbits.RBIF = 0;    // LIMPIAR BANDERA DE INTERRUPCION EN PORTB
     }
     
-    else if(T0IF){                   // INTERRUPCION DE TMR0 ACTIVADA
+    else if(T0IF){              // INTERRUPCION DE TMR0 ACTIVADA
         INTCONbits.T0IF = 0;    // LIMPIAR BANDERA DE INTERRUPCION EN TMR0
         TMR0 = tmr0_val;        // REINICIAR TMR0
         PORTD = 0;              // PREPARAR PORTD PARA RECIVIR VALORES A DISP
-        if (disp_flag == 0){
-            PORTC = (index[ones]);
-            disp3 = 0;
-            disp1 = 1;            
-            disp_flag = 1;
+        if (disp_flag == 0){            //
+            PORTC = (index[ones]);      //
+            disp3 = 0;                  //
+            disp1 = 1;                  //
+            disp_flag = 1;              //
         }
-        else if (disp_flag == 1){
-            PORTC = (index[tens]);
-            disp1 = 0;
-            disp2 = 1;
-            disp_flag = 2;
+        else if (disp_flag == 1){       //
+            PORTC = (index[tens]);      //
+            disp1 = 0;                  //
+            disp2 = 1;                  //
+            disp_flag = 2;              //
         }
-        else if (disp_flag == 2){
-            PORTC = (index[huns]);
-            disp2 = 0;
-            disp3 = 1;            
-            disp_flag = 0;
+        else if (disp_flag == 2){       //
+            PORTC = (index[huns]);      //
+            disp2 = 0;                  //
+            disp3 = 1;                  //
+            disp_flag = 0;              //
         }
-        
     }
     return;
 }
@@ -183,7 +182,7 @@ void main(void) {
     //LOOP MAIN
     while(1){
         PORTA = contador1;      // ACTUALIZAR CONSTANTEMENTE PORTC
-        digits();
+        digits();               // SEPARAR DIGITOS DE CUENTA
     }
     return;
 }
